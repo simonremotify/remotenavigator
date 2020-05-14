@@ -1,0 +1,97 @@
+#!/usr/bin/python3
+
+import argparse
+import graphviz
+import json
+import os
+
+bindir = os.path.dirname(os.path.realpath(__file__))
+defaultmodel = os.path.join(bindir, '..', 'model', 'model.rnm')
+
+parser = argparse.ArgumentParser(description='Output a sub-graph with the given node as the focus.')
+parser.add_argument('--model', default=defaultmodel)
+parser.add_argument('--focus', required=True)
+
+args = parser.parse_args()
+
+modelfile = open(args.model, 'r')
+model = json.load(modelfile)
+
+print(model)
+
+def makeInEdges(outedges):
+    inedges = {}
+    for source,targets in outedges.items():
+        for outedgeparams in targets:
+            target = outedgeparams['target']
+            if target not in inedges:
+                inedges[target] = []
+            inedges[target].append({'source': source})
+
+    return inedges
+
+nodes = model['nodes']
+outedges = model['outedges']
+inedges = makeInEdges(outedges)
+
+print(inedges)
+
+def findIncluded(nodes, outedges, inedges, focus):
+    stack = [focus]
+    included = set()
+
+    # forward from focus
+    while(len(stack)):
+        current = stack.pop()
+        included.add(current)
+
+        if current not in outedges:
+            continue
+        currentoutedges = outedges[current]
+
+        for outedgeparams in currentoutedges:
+            target = outedgeparams['target']
+            stack.append(target)
+
+    stack = [focus]
+    # back from focus
+    while(False and len(stack)):
+        current = stack.pop()
+        included.add(current)
+
+        if current not in inedges:
+            continue
+        currentinedges = inedges[current]
+
+        for inedgeparams in currentinedges:
+            source = inedgeparams['source']
+            stack.append(source)
+
+    return included
+
+included = findIncluded(nodes, outedges, inedges, args.focus)
+
+def subgraph(nodes, outedges, include):
+    subgraphnodes = {k:v for (k,v) in nodes.items() if k in include}
+    print("subgraphnodes ", subgraphnodes)
+
+    subgraphoutedges = {source:[params for params in targets if params['target'] in include]
+                            for (source,targets) in outedges.items() if source in include}
+
+    return subgraphnodes, subgraphoutedges
+
+print('====================')
+print(subgraph(nodes, outedges, included))
+
+type2shape = {'problem': 'diamond',
+              'practice': 'rarrow',
+              'benefit': 'cds'}
+
+def toGraphviz(nodes, outedges):
+    dot = graphviz.Digraph()
+    for (label,nodeinfo) in nodes.items():
+        dot.node(label, shape=type2shape[nodeinfo['type']])
+
+    return dot
+
+toGraphviz(nodes, outedges).render('graph', view=True)
