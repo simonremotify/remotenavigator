@@ -10,14 +10,13 @@ defaultmodel = os.path.join(bindir, '..', 'model', 'model.rnm')
 
 parser = argparse.ArgumentParser(description='Output a sub-graph with the given node as the focus.')
 parser.add_argument('--model', default=defaultmodel)
-parser.add_argument('--focus', required=True)
+parser.add_argument('--focus')
+parser.add_argument('--subset', action='append')
 
 args = parser.parse_args()
 
 modelfile = open(args.model, 'r')
 model = json.load(modelfile)
-
-print(model)
 
 def makeInEdges(outedges):
     inedges = {}
@@ -29,12 +28,6 @@ def makeInEdges(outedges):
             inedges[target].append({'source': source})
 
     return inedges
-
-nodes = model['nodes']
-outedges = model['outedges']
-inedges = makeInEdges(outedges)
-
-print(inedges)
 
 def findIncluded(nodes, outedges, inedges, focus):
     stack = [focus]
@@ -55,9 +48,13 @@ def findIncluded(nodes, outedges, inedges, focus):
 
     stack = [focus]
     # back from focus
-    while(False and len(stack)):
+    while(len(stack)):
         current = stack.pop()
+        if current != focus and current in included:
+            continue
         included.add(current)
+
+        print("Current ", current)
 
         if current not in inedges:
             continue
@@ -69,8 +66,6 @@ def findIncluded(nodes, outedges, inedges, focus):
 
     return included
 
-included = findIncluded(nodes, outedges, inedges, args.focus)
-
 def subgraph(nodes, outedges, include):
     subgraphnodes = {k:v for (k,v) in nodes.items() if k in include}
     print("subgraphnodes ", subgraphnodes)
@@ -80,18 +75,51 @@ def subgraph(nodes, outedges, include):
 
     return subgraphnodes, subgraphoutedges
 
-print('====================')
-print(subgraph(nodes, outedges, included))
 
-type2shape = {'problem': 'diamond',
-              'practice': 'rarrow',
-              'benefit': 'cds'}
+type2shape = {'problem': 'hexagon',
+              'practice': 'cds',
+              'benefit': 'box'}
+type2bgcolor = {'problem': '#f19292',
+                'practice': '#f6d186',
+                'benefit': '#cbe2b0'}
+type2margin = {'problem': '0.1',
+                'practice': '0.3',
+                'benefit': '0.22'}
 
 def toGraphviz(nodes, outedges):
-    dot = graphviz.Digraph()
+    dot = graphviz.Digraph(format='png')
     for (label,nodeinfo) in nodes.items():
-        dot.node(label, shape=type2shape[nodeinfo['type']])
+        dot.node(label,
+                 shape=type2shape[nodeinfo['type']],
+                 style='rounded,filled',
+                 penwidth='0',
+                 fillcolor=type2bgcolor[nodeinfo['type']],
+                 fontname='Exo',
+                 margin=type2margin[nodeinfo['type']])
+    for (source, targets) in outedges.items():
+        for target in targets:
+            dot.edge(source, target['target'])
 
     return dot
 
-toGraphviz(nodes, outedges).render('graph', view=True)
+
+nodes = model['nodes']
+outedges = model['outedges']
+inedges = makeInEdges(outedges)
+focus = args.focus
+
+g = toGraphviz(nodes, outedges)
+g.render('whole_model')
+
+for focus in nodes:
+    included = findIncluded(nodes, outedges, inedges, focus)
+    g = toGraphviz(*subgraph(nodes, outedges, included))
+    g.attr(label=focus)
+    g.render('graph_' + focus)
+
+for (i,subset) in enumerate(args.subset):
+    included = subset.split(',')
+    print("Subset ", included)
+    g = toGraphviz(*subgraph(nodes, outedges, included))
+    g.attr(rankdir='LR')
+    g.render('subset_' + str(i))
