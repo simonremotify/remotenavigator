@@ -1,0 +1,20 @@
+{
+  "nodes": {
+  "Starting where ...": {"type": "problem"},
+  "... you are now": {"type": "problem"},
+  "Your": {"type": "practice"},
+  "Unique": {"type": "practice"},
+  "Journey": {"type": "practice"},
+  "Better results": {"type": "benefit"},
+  "Happier people": {"type": "benefit"}
+  },
+  "outedges": {
+    "Starting where ...": [{"target": "Your"}],
+    "... you are now": [{"target": "Unique"}],
+    "Your": [{"target": "Unique"}],
+    "Unique": [{"target": "Journey"},
+               {"target": "Happier people"}],
+    "Journey": [{"target": "Better results"}],
+    "Happier people": [{"target": "Better results"}]
+  }
+}

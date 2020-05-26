@@ -1,0 +1,15 @@
+{
+  "nodes": {
+  "Problem": {"type": "problem"},
+  "Another problem": {"type": "problem"},
+  "Practice": {"type": "practice"},
+  "Additional Benefit": {"type": "benefit"},
+  "Another benefit": {"type": "benefit"}
+  },
+  "outedges": {
+    "Problem": [{"target": "Practice"}],
+    "Another problem": [{"target": "Practice"}],
+    "Practice": [{"target": "Additional Benefit"},
+                 {"target": "Another benefit"}]
+  }
+}
