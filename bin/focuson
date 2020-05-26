@@ -11,6 +11,7 @@ defaultmodel = os.path.join(bindir, '..', 'model', 'model.rnm')
 parser = argparse.ArgumentParser(description='Output a sub-graph with the given node as the focus.')
 parser.add_argument('--model', default=defaultmodel)
 parser.add_argument('--focus')
+parser.add_argument('--allfoci', action='store_true')
 parser.add_argument('--subset', action='append')
 
 args = parser.parse_args()
@@ -79,21 +80,28 @@ def subgraph(nodes, outedges, include):
 type2shape = {'problem': 'hexagon',
               'practice': 'cds',
               'benefit': 'box'}
-type2bgcolor = {'problem': '#f19292',
-                'practice': '#f6d186',
-                'benefit': '#cbe2b0'}
+type2bgcolor = {'problem': '#325384',
+                'practice': '#f0f0c9',
+                'benefit': '#f33ad7'}
+type2fontcolor = {'problem': '#dddddd',
+                  'practice': '#111111',
+                  'benefit': '#ffffff'}
 type2margin = {'problem': '0.1',
                 'practice': '0.3',
                 'benefit': '0.22'}
 
 def toGraphviz(nodes, outedges):
     dot = graphviz.Digraph(format='png')
+    dot.attr(rankdir='LR')
+    dot.attr(dpi='300')
+    dot.attr(bgcolor='#99999900')
     for (label,nodeinfo) in nodes.items():
         dot.node(label,
                  shape=type2shape[nodeinfo['type']],
                  style='rounded,filled',
                  penwidth='0',
                  fillcolor=type2bgcolor[nodeinfo['type']],
+                 fontcolor=type2fontcolor[nodeinfo['type']],
                  fontname='Exo',
                  margin=type2margin[nodeinfo['type']])
     for (source, targets) in outedges.items():
@@ -111,15 +119,17 @@ focus = args.focus
 g = toGraphviz(nodes, outedges)
 g.render('whole_model')
 
-for focus in nodes:
-    included = findIncluded(nodes, outedges, inedges, focus)
-    g = toGraphviz(*subgraph(nodes, outedges, included))
-    g.attr(label=focus)
-    g.render('graph_' + focus)
+if args.allfoci:
+    for focus in nodes:
+        included = findIncluded(nodes, outedges, inedges, focus)
+        g = toGraphviz(*subgraph(nodes, outedges, included))
+        g.attr(label=focus)
+        g.render('graph_' + focus)
 
-for (i,subset) in enumerate(args.subset):
-    included = subset.split(',')
-    print("Subset ", included)
-    g = toGraphviz(*subgraph(nodes, outedges, included))
-    g.attr(rankdir='LR')
-    g.render('subset_' + str(i))
+if args.subset:
+    for (i,subset) in enumerate(args.subset):
+        included = subset.split(',')
+        print("Subset ", included)
+        g = toGraphviz(*subgraph(nodes, outedges, included))
+        g.attr(rankdir='LR')
+        g.render('subset_' + str(i))
