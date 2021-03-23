@@ -97,19 +97,24 @@ def toGraphviz(nodes, outedges):
     dot.attr(bgcolor='#99999900')
     for (label,nodeinfo) in nodes.items():
         dot.node(label,
-                 shape=type2shape[nodeinfo['type']],
+                 shape=type2shape.get(nodeinfo['type'], 'box'),
                  style='rounded,filled',
                  penwidth='0',
-                 fillcolor=type2bgcolor[nodeinfo['type']],
-                 fontcolor=type2fontcolor[nodeinfo['type']],
+                 fillcolor=type2bgcolor.get(nodeinfo['type'], '#777777'),
+                 fontcolor=type2fontcolor.get(nodeinfo['type'], '#ffffff'),
                  fontname='Exo',
-                 margin=type2margin[nodeinfo['type']])
+                 margin=type2margin.get(nodeinfo['type'],'0.22'))
     for (source, targets) in outedges.items():
         for target in targets:
             dot.edge(source, target['target'])
 
     return dot
 
+def renderGraphForFocus(nodes, outedges, inedges, focus):
+    included = findIncluded(nodes, outedges, inedges, focus)
+    g = toGraphviz(*subgraph(nodes, outedges, included))
+    g.attr(label=focus)
+    g.render('graph_' + focus)
 
 nodes = model['nodes']
 outedges = model['outedges']
@@ -119,12 +124,12 @@ focus = args.focus
 g = toGraphviz(nodes, outedges)
 g.render('whole_model')
 
+if args.focus:
+    renderGraphForFocus(nodes, outedges, inedges, focus)
+
 if args.allfoci:
-    for focus in nodes:
-        included = findIncluded(nodes, outedges, inedges, focus)
-        g = toGraphviz(*subgraph(nodes, outedges, included))
-        g.attr(label=focus)
-        g.render('graph_' + focus)
+    for n in nodes:
+        renderGraphForFocus(nodes, outedges, inedges, n)
 
 if args.subset:
     for (i,subset) in enumerate(args.subset):
