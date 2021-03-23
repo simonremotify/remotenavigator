@@ -45,7 +45,8 @@
     "Inclusion": {"type": "benefit"},
     "Personal continuity": {"type": "benefit"},
     "Alignment": {"type": "benefit"},
-    "Diversity": {"type": "benefit"}
+    "Diversity": {"type": "benefit"},
+    "Low overheads": {"type": "benefit"}
   },
   "outedges": {
     "Supervision": [{"target": "Trust & autonomy"},
@@ -116,7 +117,8 @@
     "Radical flexibility": [{"target": "Community involvement"},
                          {"target": "Employee satisfaction"},
                          {"target": "Higher throughput"},
-                         {"target": "Diversity"}],
+                         {"target": "Diversity"},
+                         {"target": "Low overheads"}],
     "Team agreement": [{"target": "Radical flexibility"},
                        {"target": "Visible teamwork"},
                        {"target": "Accountability"},
@@ -169,6 +171,7 @@
     "Inclusion": [{"target": "Retention"}],
     "Personal continuity": [],
     "Alignment": [{"target": "Outcome quality"}],
-    "Diversity": [{"target": "Outcome quality"}]
+    "Diversity": [{"target": "Outcome quality"}],
+    "Low overheads": [{"target": "Scalability"}]
   }
 }
