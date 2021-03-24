@@ -46,7 +46,8 @@
     "Personal continuity": {"type": "benefit"},
     "Alignment": {"type": "benefit"},
     "Diversity": {"type": "benefit"},
-    "Low overheads": {"type": "benefit"}
+    "Low overheads": {"type": "benefit"},
+    "Virtual service delivery": {"type": "benefit", "comment": "Serve clients irrespective of their geography and timezone"}
   },
   "outedges": {
     "Supervision": [{"target": "Trust & autonomy"},
@@ -126,7 +127,8 @@
     "Visible teamwork": [{"target": "Accountability"}],
     "Realtime collaboration tools": [{"target": "Visible teamwork"},
                                      {"target": "Repeatable processes"},
-                                     {"target": "Inclusion"}],
+                                     {"target": "Inclusion"},
+                                     {"target": "Virtual service delivery"}],
     "Effective meetings": [{"target": "Higher throughput"},
                            {"target": "Outcome quality"},
                            {"target": "Inclusion"}],
@@ -140,7 +142,8 @@
                               {"target": "Diversity"}],
     "Shared and organised information": [{"target": "Business continuity"},
                                          {"target": "Repeatable processes"},
-                                         {"target": "Inclusion"}],
+                                         {"target": "Inclusion"},
+                                         {"target": "Virtual service delivery"}],
     "Clarity of vision": [{"target": "Accountability"},
                           {"target": "Alignment"}],
     "Overcommunication": [{"target": "Alignment"}],
@@ -172,6 +175,7 @@
     "Personal continuity": [],
     "Alignment": [{"target": "Outcome quality"}],
     "Diversity": [{"target": "Outcome quality"}],
-    "Low overheads": [{"target": "Scalability"}]
+    "Low overheads": [{"target": "Scalability"}],
+    "Virtual service delivery": [{"target": "Scalability"}]
   }
 }
