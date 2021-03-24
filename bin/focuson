@@ -15,6 +15,7 @@ parser.add_argument('--focus')
 parser.add_argument('--allfoci', action='store_true')
 parser.add_argument('--subset', action='append')
 parser.add_argument('--outformat', default='svg')
+parser.add_argument('--maxdepth', type=int, default=float('inf'))
 
 args = parser.parse_args()
 
@@ -32,40 +33,24 @@ def makeInEdges(outedges):
 
     return inedges
 
-def findIncluded(nodes, outedges, inedges, focus):
-    stack = [focus]
+def findIncluded(nodes, outedges, inedges, focus, maxdepth):
     included = set()
 
-    # forward from focus
-    while(len(stack)):
-        current = stack.pop()
-        included.add(current)
+    def findConnected(edges, end):
+        stack = [(focus,0)]
 
-        if current not in outedges:
-            continue
-        currentoutedges = outedges[current]
+        # forward from focus
+        while(len(stack)):
+            (current,depth) = stack.pop()
+            included.add(current)
 
-        for outedgeparams in currentoutedges:
-            target = outedgeparams['target']
-            stack.append(target)
+            for edgeparams in edges.get(current, []):
+                print(edgeparams)
+                adj = edgeparams[end]
+                if depth < maxdepth: stack.append((adj,depth+1))
 
-    stack = [focus]
-    # back from focus
-    while(len(stack)):
-        current = stack.pop()
-        if current != focus and current in included:
-            continue
-        included.add(current)
-
-        print("Current ", current)
-
-        if current not in inedges:
-            continue
-        currentinedges = inedges[current]
-
-        for inedgeparams in currentinedges:
-            source = inedgeparams['source']
-            stack.append(source)
+    findConnected(outedges, 'target')
+    findConnected(inedges, 'source')
 
     return included
 
@@ -126,11 +111,13 @@ def toGraphviz(nodes, outedges):
 
     return dot
 
-def renderGraphForFocus(nodes, outedges, inedges, focus):
-    included = findIncluded(nodes, outedges, inedges, focus)
+def renderGraphForFoci(nodes, outedges, inedges, foci, outname, maxdepth):
+    included = set()
+    for f in foci:
+        included.update(findIncluded(nodes, outedges, inedges, f, maxdepth))
     g = toGraphviz(*subgraph(nodes, outedges, included))
-    g.attr(label=focus)
-    g.render('graph_' + focus)
+    g.attr(label=outname)
+    g.render('graph_' + outname)
 
 nodes = model['nodes']
 outedges = model['outedges']
@@ -140,12 +127,12 @@ g = toGraphviz(nodes, outedges)
 g.render('whole_model')
 
 if args.focus:
-    focus = findKeysMatchingRegexp(nodes, args.focus)[0]
-    renderGraphForFocus(nodes, outedges, inedges, focus)
+    foci = findKeysMatchingRegexp(nodes, args.focus)
+    renderGraphForFoci(nodes, outedges, inedges, foci, args.focus, args.maxdepth)
 
 if args.allfoci:
     for n in nodes:
-        renderGraphForFocus(nodes, outedges, inedges, n)
+        renderGraphForFoci(nodes, outedges, inedges, [n], n, args.maxdepth)
 
 if args.subset:
     for (i,subset) in enumerate(args.subset):
