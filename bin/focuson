@@ -13,6 +13,7 @@ parser.add_argument('--model', default=defaultmodel)
 parser.add_argument('--focus')
 parser.add_argument('--allfoci', action='store_true')
 parser.add_argument('--subset', action='append')
+parser.add_argument('--outformat', default='svg')
 
 args = parser.parse_args()
 
@@ -89,11 +90,13 @@ type2fontcolor = {'problem': '#dddddd',
 type2margin = {'problem': '0.1',
                 'practice': '0.3',
                 'benefit': '0.22'}
+format2dpi = {'svg': '50',
+              'png': '300'}
 
 def toGraphviz(nodes, outedges):
-    dot = graphviz.Digraph(format='png')
+    dot = graphviz.Digraph(format=args.outformat)
     dot.attr(rankdir='LR')
-    dot.attr(dpi='300')
+    dot.attr(dpi=format2dpi.get(args.outformat, '50'))
     dot.attr(bgcolor='#99999900')
     for (label,nodeinfo) in nodes.items():
         dot.node(label,
@@ -106,7 +109,7 @@ def toGraphviz(nodes, outedges):
                  margin=type2margin.get(nodeinfo['type'],'0.22'))
     for (source, targets) in outedges.items():
         for target in targets:
-            dot.edge(source, target['target'])
+            dot.edge(source, target['target'], tooltip=target.get('comment', ''))
 
     return dot
 
