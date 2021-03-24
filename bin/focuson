@@ -90,6 +90,10 @@ type2fontcolor = {'problem': '#dddddd',
 type2margin = {'problem': '0.1',
                 'practice': '0.3',
                 'benefit': '0.22'}
+edgetype2style = {'similar': 'dashed'}
+edgetype2arrowhead = {'similar': 'none'}
+edgetype2headlabel = {'detracts': '-'}
+edgetype2color = {'detracts': 'black:invis:black'}
 format2dpi = {'svg': '50',
               'png': '300'}
 
@@ -109,7 +113,12 @@ def toGraphviz(nodes, outedges):
                  margin=type2margin.get(nodeinfo['type'],'0.22'))
     for (source, targets) in outedges.items():
         for target in targets:
-            dot.edge(source, target['target'], tooltip=target.get('comment', ''))
+            dot.edge(source, target['target'],
+                     tooltip=target.get('comment', ''),
+                     style=edgetype2style.get(target.get('type', ''), ''),
+                     arrowhead=edgetype2arrowhead.get(target.get('type', ''), ''),
+                     color=edgetype2color.get(target.get('type', ''), ''),
+                     headlabel=edgetype2headlabel.get(target.get('type', ''), ''))
 
     return dot
 
