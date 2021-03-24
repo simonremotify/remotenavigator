@@ -4,6 +4,7 @@ import argparse
 import graphviz
 import json
 import os
+import re
 
 bindir = os.path.dirname(os.path.realpath(__file__))
 defaultmodel = os.path.join(bindir, '..', 'model', 'model.rnm')
@@ -77,6 +78,8 @@ def subgraph(nodes, outedges, include):
 
     return subgraphnodes, subgraphoutedges
 
+def findKeysMatchingRegexp(map, regexp):
+    return [k for k in map if re.match(regexp, k)]
 
 type2shape = {'problem': 'hexagon',
               'practice': 'cds',
@@ -96,6 +99,7 @@ edgetype2headlabel = {'detracts': '-'}
 edgetype2color = {'detracts': 'black:invis:black'}
 format2dpi = {'svg': '50',
               'png': '300'}
+
 
 def toGraphviz(nodes, outedges):
     dot = graphviz.Digraph(format=args.outformat)
@@ -131,12 +135,12 @@ def renderGraphForFocus(nodes, outedges, inedges, focus):
 nodes = model['nodes']
 outedges = model['outedges']
 inedges = makeInEdges(outedges)
-focus = args.focus
 
 g = toGraphviz(nodes, outedges)
 g.render('whole_model')
 
 if args.focus:
+    focus = findKeysMatchingRegexp(nodes, args.focus)[0]
     renderGraphForFocus(nodes, outedges, inedges, focus)
 
 if args.allfoci:
