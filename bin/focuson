@@ -99,7 +99,8 @@ def toGraphviz(nodes, outedges):
                  fillcolor=type2bgcolor.get(nodeinfo['type'], '#777777'),
                  fontcolor=type2fontcolor.get(nodeinfo['type'], '#ffffff'),
                  fontname='Exo',
-                 margin=type2margin.get(nodeinfo['type'],'0.22'))
+                 margin=type2margin.get(nodeinfo['type'],'0.22'),
+                 tooltip=nodeinfo.get('comment', ''))
     for (source, targets) in outedges.items():
         for target in targets:
             dot.edge(source, target['target'],
