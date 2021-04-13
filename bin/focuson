@@ -116,9 +116,91 @@ def renderGraphForFoci(nodes, outedges, inedges, foci, outname, maxdepth):
     included = set()
     for f in foci:
         included.update(findIncluded(nodes, outedges, inedges, f, maxdepth))
-    g = toGraphviz(*subgraph(nodes, outedges, included))
+    subg = subgraph(nodes, outedges, included)
+    g = toGraphviz(*subg)
     g.attr(label=outname)
     g.render('graph_' + outname)
+
+    return subg
+
+
+def groupEdgesByType(edges):
+    grouped = {}
+    for e in edges:
+        grouped.setdefault(e.get('type', None), []).append(e)
+
+    return grouped
+
+def getRelation(sourceinfo, target):
+    defaults = {"problem": "Problem '%s' is addressed by '%s'",
+                "practice": "Practice '%s' supports '%s'",
+                "threat": "Threat '%s' is addressed by '%s'"
+                }
+    default = defaults.get(sourceinfo['type'], "%s (" + sourceinfo['type'] + ") -> %s")
+
+    relations = {('threat','detracts'): "Threat '%s' detracts from '%s'",
+                 ('threat', 'similar'): "Threat '%s' is similar to '%s'"}
+
+    return relations.get((sourceinfo['type'], target.get('type', None)), default)
+
+def describeEdge(sourcelabel, sourceinfo, target):
+    relation = getRelation(sourceinfo, target)
+    return relation % (sourcelabel, target['target'])
+    description = "%s %s %s %s" % (sourceinfo['type'], sourcelabel, target.get('type', ''), target['target'])
+    return description
+
+def renderHtmlForNodes(nodes, outedges, outname):
+    import xml.etree.ElementTree as ET
+
+    html = ET.Element('html')
+    head = ET.SubElement(html, 'head')
+    body = ET.SubElement(html, 'body')
+    title = ET.SubElement(body, 'h1')
+    title.text = outname
+    ET.SubElement(body, 'img', attrib={'src': 'graph_'+outname+'.svg'})
+
+    for (label,nodeinfo) in nodes.items():
+        h2 = ET.SubElement(body, 'h2')
+        h2.text = label
+        if 'comment' in nodeinfo:
+            p = ET.SubElement(body, 'p')
+            p.text = nodeinfo.get('comment', '')
+
+        for (type, targets) in groupEdgesByType(outedges.get(label, [])).items():
+            for target in targets:
+                h4 = ET.SubElement(body, 'h4')
+                h4.text = describeEdge(label, nodeinfo, target)
+
+                p = ET.SubElement(body, 'p')
+                p.text = target.get('comment', '')
+
+#        dot.node(label,
+#                 shape=type2shape.get(nodeinfo['type'], 'box'),
+#                 style='rounded,filled',
+#                 penwidth='0',
+#                 fillcolor=type2bgcolor.get(nodeinfo['type'], '#777777'),
+#                 fontcolor=type2fontcolor.get(nodeinfo['type'], '#ffffff'),
+#                 fontname='Exo',
+#                 margin=type2margin.get(nodeinfo['type'],'0.22'),
+#                 tooltip=nodeinfo.get('comment', ''))
+#    for (source, targets) in outedges.items():
+#        for target in targets:
+#            dot.edge(source, target['target'],
+#                     tooltip=target.get('comment', ''),
+#                     style=edgetype2style.get(target.get('type', ''), ''),
+#                     arrowhead=edgetype2arrowhead.get(target.get('type', ''), ''),
+#                     color=edgetype2color.get(target.get('type', ''), ''),
+#                     headlabel=edgetype2headlabel.get(target.get('type', ''), ''))
+    style = ET.SubElement(head, 'style')
+    style.text = """\
+    h2 { margin-top: 25px; margin-bottom: 5px }
+    h4 { margin-left: 5px; margin-bottom: 0px; }
+    h2 + p { margin-left: 0px; font-style: italic }
+    p { margin: 5px; }
+    """
+
+    htmlfile = open("graph_" + outname + ".html", "w")
+    htmlfile.write(ET.tostring(html).decode("utf-8"))
 
 nodes = model['nodes']
 outedges = model['outedges']
@@ -129,11 +211,14 @@ g.render('whole_model')
 
 if args.focus:
     foci = findKeysMatchingRegexp(nodes, args.focus)
-    renderGraphForFoci(nodes, outedges, inedges, foci, args.focus, args.maxdepth)
+    subg = renderGraphForFoci(nodes, outedges, inedges, foci, args.focus, args.maxdepth)
+    renderHtmlForNodes(*subg, args.focus)
 
 if args.allfoci:
     for n in nodes:
-        renderGraphForFoci(nodes, outedges, inedges, [n], n, args.maxdepth)
+        filename = n.translate(n.maketrans("/", "-"))
+        subg = renderGraphForFoci(nodes, outedges, inedges, [n], filename, args.maxdepth)
+        renderHtmlForNodes(*subg, filename)
 
 if args.subset:
     for (i,subset) in enumerate(args.subset):
